@@ -1,25 +1,33 @@
-const url = "https://viacep.com.br/ws/89801112/json/";
+const urlBase = "https://viacep.com.br/ws/";
 
-export async function getCEPData(element) {
+export async function getCEPData(cep, element) {
+    const url = `${urlBase}${cep}/json/`; // Generamos la URL con el CEP dinámico
     let headers = new Headers();
     headers.append('Content-Type', 'application/json');
+    
     try {
-        fetch(url, {
-            headers: headers
-        }).then(function (response) {
-            // The API call was successful!
-            return response.json();
-        }).then(function (data) {
-            // This is the JSON from our response
-            // console.log(data);
-            element.innerHTML = `${data.logradouro}, ${data.complemento} - ${data.bairro}
-            <br>${data.localidade}/${data.uf}, ${data.cep}
-            <br>${data.ddd} - ${data.regiao}`
-        }).catch(function (err) {
-            // There was an error
-            console.warn('Something went wrong.', err);
-        });
+        const response = await fetch(url, { headers: headers });
+        
+        if (!response.ok) {
+            throw new Error("Erro ao buscar CEP");
+        }
+
+        const data = await response.json();
+        
+        if (data.erro) {
+            element.innerHTML = "CEP não encontrado!";
+        } else {
+            element.innerHTML = `
+                <strong>Logradouro:</strong> ${data.logradouro}, ${data.complemento} <br>
+                <strong>Bairro:</strong> ${data.bairro} <br>
+                <strong>Cidade/Estado:</strong> ${data.localidade}/${data.uf} <br>
+                <strong>CEP:</strong> ${data.cep} <br>
+                <strong>DDD:</strong> ${data.ddd} <br>
+                <strong>Região:</strong> ${data.regiao} <br>
+            `;
+        }
     } catch (error) {
-        console.error(error.message);
+        console.error("Erro na requisição:", error.message);
+        element.innerHTML = "Algo deu errado, tente novamente mais tarde!";
     }
 }
